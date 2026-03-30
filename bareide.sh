@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ "${1:-}" = "list" ]; then
+if [ "${1:-}" = "ls" ]; then
     found=0
     for sock in /tmp/bareide-*/; do
         [ -d "$sock" ] || continue
         name="$(basename "$sock")"
         if tmux -L "$name" has-session 2>/dev/null; then
             dir="$(tmux -L "$name" display-message -p '#{pane_current_path}' 2>/dev/null)"
-            echo "  $name  $dir"
+            echo "  $name  $dir  (attach: tmux -L $name attach)"
             found=1
         fi
     done
@@ -34,10 +34,15 @@ if [ "${1:-}" = "kill" ]; then
 fi
 
 if [ -z "${1:-}" ]; then
-    echo "Usage: $0 <name>"
-    echo "       $0 list"
+    echo "Usage: $0 <name> [2|3]"
+    echo "       $0 ls"
     echo "       $0 kill <name|all>"
     exit 1
+fi
+
+PANES="${2:-3}"
+if [ "$PANES" != "2" ] && [ "$PANES" != "3" ]; then
+    echo "Pane count must be 2 or 3" && exit 1
 fi
 
 SN="$(printf '%s' "$1" | tr '.:/\\' '----')"
@@ -49,6 +54,12 @@ if tmux -L "$SK" has-session 2>/dev/null; then
 fi
 
 mkdir -p "$RD"
+
+if [ "$(uname)" = "Darwin" ]; then
+    CLIP_CMD="pbcopy"
+else
+    CLIP_CMD="xclip -selection clipboard"
+fi
 
 cat > "$RD/vimrc" << '__VIMRC__'
 syn on
@@ -63,7 +74,7 @@ autocmd FocusGained,BufEnter,CursorHold,CursorHoldI * checktime
 autocmd FileChangedShellPost * echohl WarningMsg | echo "File reloaded: " . expand('%:t') | echohl None
 __VIMRC__
 
-cat > "$RD/tmux.conf" << '__TMUXCONF__'
+cat > "$RD/tmux.conf" << __TMUXCONF__
 bind k selectp -U
 bind j selectp -D
 bind h selectp -L
@@ -83,17 +94,22 @@ set -g pane-border-style fg=colour240
 set -g pane-active-border-style fg=cyan
 set -g status-style bg=cyan,fg=black
 set -g mouse on
+set -g set-clipboard on
 set -g history-limit 10000
 setw -g mode-keys vi
 bind-key -T copy-mode-vi v send-keys -X begin-selection
-bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "xclip -selection clipboard"
+bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "$CLIP_CMD"
 __TMUXCONF__
 
 export VIMINIT="source $RD/vimrc"
 PD="$(pwd)"
 
 tmux -L "$SK" -f "$RD/tmux.conf" new-session -d -s "$SN" -c "$PD" -x 200 -y 50
-tmux -L "$SK" split-window -h -t "$SN:0" -p 40 -c "$PD"
-tmux -L "$SK" split-window -v -t "$SN:0.0" -p 20 -c "$PD"
+if [ "$PANES" = "2" ]; then
+    tmux -L "$SK" split-window -v -t "$SN:0" -p 30 -c "$PD"
+else
+    tmux -L "$SK" split-window -h -t "$SN:0" -p 40 -c "$PD"
+    tmux -L "$SK" split-window -v -t "$SN:0.0" -p 20 -c "$PD"
+fi
 tmux -L "$SK" select-pane -t "$SN:0.0"
 exec tmux -L "$SK" attach

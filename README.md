@@ -4,50 +4,59 @@ A single bash script that sets up a vim + tmux session with two panes. The vim a
 
 ## Layout
 
+Default is 3 panes. Pass `2` for a simpler two-pane layout.
+
+**3 panes** (default):
 ```
 ┌─────────────────┬──────────────┐
 │                 │              │
-│   Vim           │      AI      │
-│   (Pane 0)      │  Assistant   │
-│                 │   (Pane 2)   │
+│   Editor        │   Terminal   │
+│   (Pane 0)      │   (Pane 2)   │
+│                 │              │
 ├─────────────────┤              │
 │   Terminal      │              │
 │   (Pane 1)      │              │
 └─────────────────┴──────────────┘
 ```
 
-- **Pane 0** (top): Editor
-- **Pane 1** (bottom): Terminal
-- **Pane 2** (right): AI assistant  (add manually with ctrl+b + ")
+**2 panes**:
+```
+┌────────────────────────────────┐
+│                                │
+│   Editor (Pane 0)              │
+│                                │
+├────────────────────────────────┤
+│   Terminal (Pane 1)            │
+└────────────────────────────────┘
+```
 
 ## Usage
 
 ```bash
-./bareide.sh <project-name>
+./bareide.sh <name> [2|3]    # start/attach a session (default: 3 panes)
+./bareide.sh ls              # list active sessions with attach commands
+./bareide.sh kill <name|all> # kill a session or all sessions
 ```
 
-Uses an isolated tmux socket (`tmux -L bareide-<project name>`) so it doesn't touch the existing `~/.tmux.conf`. Configs are written to `/tmp` at launch.
-
-```bash
-./bareide.sh my-project
-```
+Uses an isolated tmux socket (`tmux -L bareide-<name>`) so it doesn't touch existing tmux config. Configs are written to `/tmp` at launch.
 
 ## Requirements
 
 - tmux
 - vim
+- `xclip` (Linux) for clipboard support (macOS uses built-in `pbcopy`)
 
 ## Keybindings
 
 | Binding | Action |
 |---------|--------|
-| `Prefix + k/j/h/l` | Switch panes (up/down/left/right) |
-| `Prefix + Arrow keys` | Resize panes (5 units) |
-| `Prefix + [` | Enter copy mode |
+| `Ctrl-b + k/j/h/l` | Switch panes (up/down/left/right) |
+| `Ctrl-b + Arrow keys` | Resize panes (5 units) |
+| `Ctrl-b + [` | Enter copy mode |
 | `v` (in copy mode) | Start selection |
 | `y` (in copy mode) | Yank to clipboard |
-| `Prefix + d` | Detach |
-| `Prefix + &` | Kill window |
+| `Ctrl-b + d` | Detach |
+| `Ctrl-b + &` | Kill window |
 
 Mouse support is enabled. Scrollback history is 10,000 lines.
 
