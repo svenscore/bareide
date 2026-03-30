@@ -1,6 +1,6 @@
 # bareide
 
-A single bash script that sets up a vim + tmux session with three panes. The vim and tmux configs are embedded in the script with no external dotfiles.
+A single bash script that sets up a vim + tmux session with two panes. The vim and tmux configs are embedded in the script with no external dotfiles.
 
 ## Layout
 
@@ -16,27 +16,21 @@ A single bash script that sets up a vim + tmux session with three panes. The vim
 └─────────────────┴──────────────┘
 ```
 
-- **Pane 0** (top-left, 80% height): Editor
-- **Pane 1** (bottom-left, 20% height): Terminal
-- **Pane 2** (right, 40% width): AI assistant
+- **Pane 0** (top): Editor
+- **Pane 1** (bottom): Terminal
+Add manual:
+- **Pane 2** (right): AI assistant
 
 ## Usage
 
 ```bash
-./bareide.sh <project-directory> [assistant]
-./bareide.sh install
+./bareide.sh <project-name>
 ```
 
-No assistant launches unless passed as the second argument. Assistants are defined in the `ASSISTANT CONFIGURATION` section at the top of `bareide.sh`. The session name is derived from the directory name plus a random nonce, so multiple sessions can run for the same project.
-
-Uses an isolated tmux socket (`tmux -L bareide`) so it doesn't touch the existing `~/.tmux.conf`. Configs are written to `/tmp` at launch.
+Uses an isolated tmux socket (`tmux -L bareide-<project name>`) so it doesn't touch the existing `~/.tmux.conf`. Configs are written to `/tmp` at launch.
 
 ```bash
-# No assistant
-./bareide.sh ~/my-project
-
-# With an assistant
-./bareide.sh ~/my-project claude
+./bareide.sh my-project
 ```
 
 ## Requirements
