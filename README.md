@@ -18,7 +18,7 @@ A single bash script that sets up a vim + tmux session with two panes. The vim a
 
 - **Pane 0** (top): Editor
 - **Pane 1** (bottom): Terminal
-Add manual:
+Add with ctrl b + "
 - **Pane 2** (right): AI assistant
 
 ## Usage
