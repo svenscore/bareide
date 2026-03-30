@@ -95,6 +95,7 @@ set -g pane-active-border-style fg=cyan
 set -g status-style bg=cyan,fg=black
 set -g mouse on
 set -g set-clipboard on
+set -g allow-passthrough on
 set -g history-limit 10000
 setw -g mode-keys vi
 bind-key -T copy-mode-vi v send-keys -X begin-selection

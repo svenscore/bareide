@@ -1,33 +1,33 @@
 # bareide
 
-A single bash script that sets up a vim + tmux session with two panes. The vim and tmux configs are embedded in the script with no external dotfiles.
+A single bash script that sets up a vim + tmux session. The vim and tmux configs are embedded in the script with no external dotfiles. Tested locally on macOS, SSH to Linux from macOS, and SSH to Linux from iPadOS (Blink).
 
 ## Layout
 
-Default is 3 panes. Pass `2` for a simpler two-pane layout.
+Default is 3 panes. Pass `2` for a simpler two-pane layout.  Below is an example layout.
 
 **3 panes** (default):
 ```
-┌─────────────────┬──────────────┐
-│                 │              │
-│   Editor        │   Terminal   │
-│   (Pane 0)      │   (Pane 2)   │
-│                 │              │
-├─────────────────┤              │
-│   Terminal      │              │
-│   (Pane 1)      │              │
-└─────────────────┴──────────────┘
+┌──────────────┬─────────────────┐
+│              │                 │
+│   VIM        │  AI Assistant   │
+│   (Pane 0)   │  (Pane 2)       │
+│              │                 │
+├──────────────┤                 │
+│   Terminal   │                 │
+│   (Pane 1)   │                 │
+└──────────────┴─────────────────┘
 ```
 
 **2 panes**:
 ```
-┌────────────────────────────────┐
-│                                │
-│   Editor (Pane 0)              │
-│                                │
-├────────────────────────────────┤
-│   Terminal (Pane 1)            │
-└────────────────────────────────┘
+┌─────────────────────────────┐
+│                             │
+│  VIM or Terminal (Pane 0)   │
+│                             │
+├─────────────────────────────┤
+│  AI Assistant (Pane 1)      │
+└─────────────────────────────┘
 ```
 
 ## Usage
@@ -42,9 +42,13 @@ Uses an isolated tmux socket (`tmux -L bareide-<name>`) so it doesn't touch exis
 
 ## Requirements
 
-- tmux
+- tmux (3.3+ recommended for clipboard passthrough over SSH)
 - vim
 - `xclip` (Linux) for clipboard support (macOS uses built-in `pbcopy`)
+
+## Clipboard
+
+Uses `pbcopy` on macOS, `xclip` on Linux. OSC 52 passthrough is enabled (`set-clipboard on`, `allow-passthrough on`) so clipboard works over SSH, including copying Claude Code auth URLs from remote sessions via Blink or other OSC 52-capable terminals.
 
 ## Keybindings
 
