@@ -4,7 +4,7 @@ A single bash script that sets up a vim + tmux session. The vim and tmux configs
 
 ## Layout
 
-Default is 3 panes. Pass `2` for a simpler two-pane layout.  Below is an example layout.
+Default is 3 panes. Use 2 panes for a simpler two-pane layout on a smaller screen.  Below are example layouts.
 
 **3 panes** (default):
 ```
