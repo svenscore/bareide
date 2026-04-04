@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ "${1:-}" = "ls" ]; then
+if [ "${1:-}" = "--ls" ]; then
     found=0
-    for sock in /tmp/bareide-*/; do
+    for sock in /tmp/bareide/*/; do
         [ -d "$sock" ] || continue
         name="$(basename "$sock")"
         if tmux -L "$name" has-session 2>/dev/null; then
@@ -16,27 +16,38 @@ if [ "${1:-}" = "ls" ]; then
     exit 0
 fi
 
-if [ "${1:-}" = "kill" ]; then
+if [ "${1:-}" = "--kill" ]; then
     target="${2:-}"
-    [ -z "$target" ] && echo "Usage: $0 kill <name|all>" && exit 1
+    [ -z "$target" ] && echo "Usage: $0 --kill <name|all>" && exit 1
     if [ "$target" = "all" ]; then
-        for sock in /tmp/bareide-*/; do
+        for sock in /tmp/bareide/*/; do
             [ -d "$sock" ] || continue
             name="$(basename "$sock")"
             tmux -L "$name" kill-server 2>/dev/null && echo "killed $name"
         done
-        rm -rf /tmp/bareide-*/ 2>/dev/null
+        rm -rf /tmp/bareide/ 2>/dev/null
         exit 0
     fi
-    tmux -L "bareide-${target}" kill-server 2>/dev/null && echo "killed bareide-${target}" || echo "no session: $target"
-    rm -rf "/tmp/bareide-${target}" 2>/dev/null
+    tmux -L "${target}" kill-server 2>/dev/null && echo "killed ${target}" || echo "no session: $target"
+    rm -rf "/tmp/bareide/${target}" 2>/dev/null
     exit 0
 fi
 
 if [ -z "${1:-}" ]; then
     echo "Usage: $0 <name> [2|3]"
-    echo "       $0 ls"
-    echo "       $0 kill <name|all>"
+    echo "       $0 --ls"
+    echo "       $0 --kill <name|all>"
+    found=0
+    for sock in /tmp/bareide/*/; do
+        [ -d "$sock" ] || continue
+        name="$(basename "$sock")"
+        if tmux -L "$name" has-session 2>/dev/null; then
+            [ "$found" = "0" ] && echo "" && echo "Active sessions:"
+            dir="$(tmux -L "$name" display-message -p '#{pane_current_path}' 2>/dev/null)"
+            echo "  $name  $dir  ->  tmux -L $name attach"
+            found=1
+        fi
+    done
     exit 1
 fi
 
@@ -46,8 +57,8 @@ if [ "$PANES" != "2" ] && [ "$PANES" != "3" ]; then
 fi
 
 SN="$(printf '%s' "$1" | tr '.:/\\' '----')"
-SK="bareide-${SN}"
-RD="/tmp/${SK}"
+SK="${SN}"
+RD="/tmp/bareide/${SN}"
 
 if tmux -L "$SK" has-session 2>/dev/null; then
     exec tmux -L "$SK" attach
