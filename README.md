@@ -33,12 +33,12 @@ Default is 3 panes. Use 2 panes for a simpler two-pane layout on a smaller scree
 ## Usage
 
 ```bash
-./bareide.sh <name> [2|3]    # start/attach a session (default: 3 panes)
-./bareide.sh ls              # list active sessions with attach commands
-./bareide.sh kill <name|all> # kill a session or all sessions
+./bareide.sh <name> [2|3]      # start/attach a session (default: 3 panes)
+./bareide.sh --ls              # list active sessions with attach commands
+./bareide.sh --kill <name|all> # kill a session or all sessions
 ```
 
-Uses an isolated tmux socket (`tmux -L bareide-<name>`) so it doesn't touch existing tmux config. Configs are written to `/tmp` at launch.
+Uses an isolated tmux socket (`tmux -L <name>`) so it doesn't touch existing tmux config. Configs are written to `/tmp/bareide/` at launch.
 
 ## Requirements
 
