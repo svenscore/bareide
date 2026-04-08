@@ -100,6 +100,7 @@ set -g history-limit 10000
 setw -g mode-keys vi
 bind-key -T copy-mode-vi v send-keys -X begin-selection
 bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "$CLIP_CMD"
+bind-key -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel "$CLIP_CMD"
 __TMUXCONF__
 
 export VIMINIT="source $RD/vimrc"
