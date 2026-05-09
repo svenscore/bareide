@@ -66,15 +66,15 @@ Mouse support is enabled. Scrollback history is 10,000 lines.
 
 ## Status bar
 
-Session name on the left. Git branch and time on the right. Cyan theme. Pane borders show each pane's current command.
+Session name on the left. Git branch and time on the right. Cyan theme. Pane borders show pane index and current command.
 
 ## Terminal title
 
 `tmux - <session name>` via OSC title escapes (iTerm2 and other xterm-compatible terminals).
 
-## Shell prompt
+## Shell
 
-Minimal `PS1` for zsh/bash (`user@ ~/path $`, red `$` on non-zero exit). Uses `ZDOTDIR` / `--rcfile`, so your `~/.zshrc` / `~/.bashrc` is never touched.
+Launches `$SHELL` normally. Your existing `~/.zshrc` / `~/.bashrc` runs untouched.
 
 ## Vim config
 
