@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+BASE="$HOME/.bareide"
+
 if [ "${1:-}" = "--ls" ]; then
     found=0
-    for sock in /tmp/bareide/*/; do
+    for sock in $BASE/*/; do
         [ -d "$sock" ] || continue
         name="$(basename "$sock")"
         if tmux -L "$name" has-session 2>/dev/null; then
@@ -20,16 +22,16 @@ if [ "${1:-}" = "--kill" ]; then
     target="${2:-}"
     [ -z "$target" ] && echo "Usage: $0 --kill <name|all>" && exit 1
     if [ "$target" = "all" ]; then
-        for sock in /tmp/bareide/*/; do
+        for sock in $BASE/*/; do
             [ -d "$sock" ] || continue
             name="$(basename "$sock")"
             tmux -L "$name" kill-server 2>/dev/null && echo "killed $name"
         done
-        rm -rf /tmp/bareide/ 2>/dev/null
+        rm -rf "$BASE/" 2>/dev/null
         exit 0
     fi
     tmux -L "${target}" kill-server 2>/dev/null && echo "killed ${target}" || echo "no session: $target"
-    rm -rf "/tmp/bareide/${target}" 2>/dev/null
+    rm -rf "$BASE/${target}" 2>/dev/null
     exit 0
 fi
 
@@ -38,7 +40,7 @@ if [ -z "${1:-}" ]; then
     echo "       $0 --ls"
     echo "       $0 --kill <name|all>"
     found=0
-    for sock in /tmp/bareide/*/; do
+    for sock in $BASE/*/; do
         [ -d "$sock" ] || continue
         name="$(basename "$sock")"
         if tmux -L "$name" has-session 2>/dev/null; then
@@ -58,11 +60,7 @@ fi
 
 SN="$(printf '%s' "$1" | tr '.:/\\' '----')"
 SK="${SN}"
-RD="/tmp/bareide/${SN}"
-
-if tmux -L "$SK" has-session 2>/dev/null; then
-    exec tmux -L "$SK" attach
-fi
+RD="$BASE/${SN}"
 
 mkdir -p "$RD"
 
@@ -71,6 +69,25 @@ if [ "$(uname)" = "Darwin" ]; then
 else
     CLIP_CMD="xclip -selection clipboard"
 fi
+
+USER_SHELL="${SHELL:-}"
+case "$(basename "$USER_SHELL")" in
+    zsh)
+        cat > "$RD/.zshrc" << '__ZSHRC__'
+PS1='%F{white}%n%F{8}@ %F{cyan}%~ %(?.%F{white}.%F{red})%#%f '
+__ZSHRC__
+        DEFAULT_COMMAND="ZDOTDIR='$RD' exec '$USER_SHELL' -i"
+        ;;
+    bash)
+        cat > "$RD/bashrc" << '__BASHRC__'
+PS1='\[\e[37m\]\u\[\e[90m\]@ \[\e[36m\]\w \[\e[$([ $? -eq 0 ] && echo 37 || echo 31)m\]\$\[\e[0m\] '
+__BASHRC__
+        DEFAULT_COMMAND="exec '$USER_SHELL' --rcfile '$RD/bashrc' -i"
+        ;;
+    *)
+        DEFAULT_COMMAND=""
+        ;;
+esac
 
 cat > "$RD/vimrc" << '__VIMRC__'
 syn on
@@ -100,9 +117,14 @@ set -g status-left ' #S '
 set -g status-right ' #(cd #{pane_current_path} && git branch --show-current 2>/dev/null) %H:%M '
 set -g status-right-length 50
 set -g focus-events on
+set -g set-titles on
+set -g set-titles-string 'tmux - #S'
+set -g default-command "$DEFAULT_COMMAND"
 set-option -g status-position top
 set -g pane-border-style fg=colour240
 set -g pane-active-border-style fg=cyan
+set -g pane-border-status top
+set -g pane-border-format ' #{pane_current_command} '
 set -g status-style bg=cyan,fg=black
 set -g mouse on
 set -g set-clipboard on
@@ -113,6 +135,10 @@ bind-key -T copy-mode-vi v send-keys -X begin-selection
 bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "$CLIP_CMD"
 bind-key -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel "$CLIP_CMD"
 __TMUXCONF__
+
+if tmux -L "$SK" has-session 2>/dev/null; then
+    exec tmux -L "$SK" attach
+fi
 
 export VIMINIT="source $RD/vimrc"
 PD="$(pwd)"

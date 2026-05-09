@@ -38,7 +38,7 @@ Default is 3 panes. Use 2 panes for a simpler two-pane layout on a smaller scree
 ./bareide.sh --kill <name|all> # kill a session or all sessions
 ```
 
-Uses an isolated tmux socket (`tmux -L <name>`) so it doesn't touch existing tmux config. Configs are written to `/tmp/bareide/` at launch.
+Uses an isolated tmux socket (`tmux -L <name>`) so it doesn't touch existing tmux config. Configs are written to `~/.bareide/<name>/` and rewritten on every launch.
 
 ## Requirements
 
@@ -66,7 +66,15 @@ Mouse support is enabled. Scrollback history is 10,000 lines.
 
 ## Status bar
 
-Session name on the left. Git branch and time on the right. Cyan theme.
+Session name on the left. Git branch and time on the right. Cyan theme. Pane borders show each pane's current command.
+
+## Terminal title
+
+`tmux - <session name>` via OSC title escapes (iTerm2 and other xterm-compatible terminals).
+
+## Shell prompt
+
+Minimal `PS1` for zsh/bash (`user@ ~/path $`, red `$` on non-zero exit). Uses `ZDOTDIR` / `--rcfile`, so your `~/.zshrc` / `~/.bashrc` is never touched.
 
 ## Vim config
 
