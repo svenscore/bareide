@@ -74,12 +74,14 @@ USER_SHELL="${SHELL:-}"
 case "$(basename "$USER_SHELL")" in
     zsh)
         cat > "$RD/.zshrc" << '__ZSHRC__'
+[ -f "$HOME/.zshrc" ] && ZDOTDIR="$HOME" source "$HOME/.zshrc"
 PS1='%F{white}%n%F{8}@ %F{cyan}%~ %(?.%F{white}.%F{red})%#%f '
 __ZSHRC__
         DEFAULT_COMMAND="ZDOTDIR='$RD' exec '$USER_SHELL' -i"
         ;;
     bash)
         cat > "$RD/bashrc" << '__BASHRC__'
+[ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
 PS1='\[\e[37m\]\u\[\e[90m\]@ \[\e[36m\]\w \[\e[$([ $? -eq 0 ] && echo 37 || echo 31)m\]\$\[\e[0m\] '
 __BASHRC__
         DEFAULT_COMMAND="exec '$USER_SHELL' --rcfile '$RD/bashrc' -i"
@@ -114,6 +116,7 @@ bind-key -r -T prefix Right resize-pane -R 5
 set-window-option -g window-status-format ''
 set-window-option -g window-status-current-format ''
 set -g status-left ' #S '
+set -g status-left-length 50
 set -g status-right ' #(cd #{pane_current_path} && git branch --show-current 2>/dev/null) %H:%M '
 set -g status-right-length 50
 set -g focus-events on
