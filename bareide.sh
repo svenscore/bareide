@@ -115,13 +115,13 @@ bind-key -r -T prefix Left resize-pane -L 5
 bind-key -r -T prefix Right resize-pane -R 5
 set-window-option -g window-status-format ''
 set-window-option -g window-status-current-format ''
-set -g status-left ' #S '
-set -g status-left-length 50
+set -g status-left ' $(id -un)@#h #S '
+set -g status-left-length 80
 set -g status-right ' #(cd #{pane_current_path} && git branch --show-current 2>/dev/null) %H:%M '
 set -g status-right-length 50
 set -g focus-events on
 set -g set-titles on
-set -g set-titles-string 'tmux - #S'
+set -g set-titles-string '$(id -un)@#h #S'
 set -g default-command "$DEFAULT_COMMAND"
 set-option -g status-position top
 set -g pane-border-style fg=colour240
