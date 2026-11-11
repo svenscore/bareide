@@ -3,6 +3,29 @@ set -euo pipefail
 
 BASE="$HOME/.bareide"
 
+# ---- Colors -----------------------------------------------------------------
+# tmux colors: "default" (terminal color), names (cyan), colourN (0-255), or #rrggbb
+INACTIVE_PANE_BG="default"
+ACTIVE_PANE_BG="colour233"
+PANE_BORDER_FG="colour240"
+PANE_ACTIVE_BORDER_FG="cyan"
+STATUS_BG="colour234"
+STATUS_FG="colour250"
+TITLE_ACTIVE_FG="colour234"
+TITLE_ACTIVE_BG="colour44"
+TITLE_ACTIVE_FADE="colour37 colour30 colour23 colour236 colour235"     # gradient after title
+TITLE_INACTIVE_FG="colour250"
+TITLE_INACTIVE_BG="colour238"
+TITLE_INACTIVE_FADE="colour237 colour236 colour235 colour234 colour233" # gradient after title
+
+# Shell prompt colors (bash/zsh): terminal palette numbers 0-255
+PROMPT_USER_FG="7"
+PROMPT_AT_FG="8"
+PROMPT_DIR_FG="6"
+PROMPT_OK_FG="7"     # prompt symbol after a successful command
+PROMPT_ERR_FG="1"    # prompt symbol after a failed command
+# -----------------------------------------------------------------------------
+
 if [ "${1:-}" = "--ls" ]; then
     found=0
     for sock in $BASE/*/; do
@@ -70,19 +93,40 @@ else
     CLIP_CMD="xclip -selection clipboard"
 fi
 
+# Replace @USER@/@AT@/@DIR@/@OK@/@ERR@ placeholders on stdin with prompt colors
+fill_prompt_colors() {
+    local s
+    s="$(cat)"
+    s="${s//@USER@/$PROMPT_USER_FG}"
+    s="${s//@AT@/$PROMPT_AT_FG}"
+    s="${s//@DIR@/$PROMPT_DIR_FG}"
+    s="${s//@OK@/$PROMPT_OK_FG}"
+    s="${s//@ERR@/$PROMPT_ERR_FG}"
+    printf '%s\n' "$s"
+}
+
+# Build "#[bg=c1]  #[bg=c2]  ..." title gradient from a space-separated color list
+title_fade() {
+    local c out=""
+    for c in $1; do out+="#[bg=$c]  "; done
+    printf '%s' "$out"
+}
+TITLE_ACTIVE_FADE_FMT="$(title_fade "$TITLE_ACTIVE_FADE")"
+TITLE_INACTIVE_FADE_FMT="$(title_fade "$TITLE_INACTIVE_FADE")"
+
 USER_SHELL="${SHELL:-}"
 case "$(basename "$USER_SHELL")" in
     zsh)
-        cat > "$RD/.zshrc" << '__ZSHRC__'
+        fill_prompt_colors > "$RD/.zshrc" << '__ZSHRC__'
 [ -f "$HOME/.zshrc" ] && ZDOTDIR="$HOME" source "$HOME/.zshrc"
-PS1='%F{white}%n%F{8}@ %F{cyan}%~ %(?.%F{white}.%F{red})%#%f '
+PS1='%F{@USER@}%n%F{@AT@}@ %F{@DIR@}%~ %(?.%F{@OK@}.%F{@ERR@})%#%f '
 __ZSHRC__
         DEFAULT_COMMAND="ZDOTDIR='$RD' exec '$USER_SHELL' -i"
         ;;
     bash)
-        cat > "$RD/bashrc" << '__BASHRC__'
+        fill_prompt_colors > "$RD/bashrc" << '__BASHRC__'
 [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
-PS1='\[\e[37m\]\u\[\e[90m\]@ \[\e[36m\]\w \[\e[$([ $? -eq 0 ] && echo 37 || echo 31)m\]\$\[\e[0m\] '
+PS1='\[\e[38;5;@USER@m\]\u\[\e[38;5;@AT@m\]@ \[\e[38;5;@DIR@m\]\w \[\e[38;5;$([ $? -eq 0 ] && echo @OK@ || echo @ERR@)m\]\$\[\e[0m\] '
 __BASHRC__
         DEFAULT_COMMAND="exec '$USER_SHELL' --rcfile '$RD/bashrc' -i"
         ;;
@@ -125,18 +169,18 @@ set -g set-titles on
 set -g set-titles-string '$(id -un)@#h #S'
 set -g default-command "$DEFAULT_COMMAND"
 set-option -g status-position top
-set -g pane-border-style fg=colour240
+set -g pane-border-style fg=$PANE_BORDER_FG
 set-hook -g window-pane-changed 'set -wF @act_bottom "#{pane_bottom}" ; set -wF @act_left "#{pane_left}" ; set -wF @act_right "#{pane_right}"'
 set-hook -g window-layout-changed 'set -wF @act_bottom "#{pane_bottom}" ; set -wF @act_left "#{pane_left}" ; set -wF @act_right "#{pane_right}"'
 set-hook -g client-attached 'set -wF @act_bottom "#{pane_bottom}" ; set -wF @act_left "#{pane_left}" ; set -wF @act_right "#{pane_right}"'
-set -g pane-active-border-style fg=cyan
+set -g pane-active-border-style fg=$PANE_ACTIVE_BORDER_FG
 set -g pane-border-status top
 set -g pane-border-lines heavy
 set -g @hline '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-set -g pane-border-format '#{?pane_active,#[fg=colour234 bg=colour44 bold],#[fg=colour250 bg=colour238 bold]} #{pane_index}: #{pane_current_command}  #{?pane_active,#[bg=colour37]  #[bg=colour30]  #[bg=colour23]  #[bg=colour236]  #[bg=colour235]  ,#[bg=colour237]  #[bg=colour236]  #[bg=colour235]  #[bg=colour234]  #[bg=colour233]  }#{?#{&&:#{==:#{pane_top},#{e|+:#{@act_bottom},2}},#{&&:#{<=:#{@act_left},#{pane_right}},#{>=:#{@act_right},#{pane_left}}}},#[fg=cyan bg=default nobold]#{@hline},}#[default]'
-set -g status-style bg=colour234,fg=colour250
-set -g window-style bg=colour233
-set -g window-active-style bg=colour234
+set -g pane-border-format '#{?pane_active,#[fg=$TITLE_ACTIVE_FG bg=$TITLE_ACTIVE_BG bold],#[fg=$TITLE_INACTIVE_FG bg=$TITLE_INACTIVE_BG bold]} #{pane_index}: #{pane_current_command}  #{?pane_active,$TITLE_ACTIVE_FADE_FMT,$TITLE_INACTIVE_FADE_FMT}#{?#{&&:#{==:#{pane_top},#{e|+:#{@act_bottom},2}},#{&&:#{<=:#{@act_left},#{pane_right}},#{>=:#{@act_right},#{pane_left}}}},#[fg=$PANE_ACTIVE_BORDER_FG bg=default nobold]#{@hline},}#[default]'
+set -g status-style bg=$STATUS_BG,fg=$STATUS_FG
+set -g window-style bg=$INACTIVE_PANE_BG
+set -g window-active-style bg=$ACTIVE_PANE_BG
 set -g mouse on
 set -g set-clipboard on
 set -g allow-passthrough on
