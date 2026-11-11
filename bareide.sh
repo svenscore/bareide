@@ -114,8 +114,9 @@ bind-key -r -T prefix Down resize-pane -D 5
 bind-key -r -T prefix Left resize-pane -L 5
 bind-key -r -T prefix Right resize-pane -R 5
 set-window-option -g window-status-format ''
-set-window-option -g window-status-current-format ''
-set -g status-left ' $(id -un)@#h #S '
+set-window-option -g window-status-current-format ' bareide: $(id -un)@#h #S '
+set -g status-justify absolute-centre
+set -g status-left ''
 set -g status-left-length 80
 set -g status-right ' #(cd #{pane_current_path} && git branch --show-current 2>/dev/null) %H:%M '
 set -g status-right-length 50
@@ -125,10 +126,17 @@ set -g set-titles-string '$(id -un)@#h #S'
 set -g default-command "$DEFAULT_COMMAND"
 set-option -g status-position top
 set -g pane-border-style fg=colour240
+set-hook -g window-pane-changed 'set -wF @act_bottom "#{pane_bottom}" ; set -wF @act_left "#{pane_left}" ; set -wF @act_right "#{pane_right}"'
+set-hook -g window-layout-changed 'set -wF @act_bottom "#{pane_bottom}" ; set -wF @act_left "#{pane_left}" ; set -wF @act_right "#{pane_right}"'
+set-hook -g client-attached 'set -wF @act_bottom "#{pane_bottom}" ; set -wF @act_left "#{pane_left}" ; set -wF @act_right "#{pane_right}"'
 set -g pane-active-border-style fg=cyan
 set -g pane-border-status top
-set -g pane-border-format ' #{pane_current_command} '
-set -g status-style bg=cyan,fg=black
+set -g pane-border-lines heavy
+set -g @hline '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+set -g pane-border-format '#{?pane_active,#[fg=colour234 bg=colour44 bold],#[fg=colour250 bg=colour238 bold]} #{pane_index}: #{pane_current_command}  #{?pane_active,#[bg=colour37]  #[bg=colour30]  #[bg=colour23]  #[bg=colour236]  #[bg=colour235]  ,#[bg=colour237]  #[bg=colour236]  #[bg=colour235]  #[bg=colour234]  #[bg=colour233]  }#{?#{&&:#{==:#{pane_top},#{e|+:#{@act_bottom},2}},#{&&:#{<=:#{@act_left},#{pane_right}},#{>=:#{@act_right},#{pane_left}}}},#[fg=cyan bg=default nobold]#{@hline},}#[default]'
+set -g status-style bg=colour234,fg=colour250
+set -g window-style bg=colour233
+set -g window-active-style bg=colour234
 set -g mouse on
 set -g set-clipboard on
 set -g allow-passthrough on
@@ -153,5 +161,10 @@ else
     tmux -L "$SK" split-window -h -t "$SN:0" -p 40 -c "$PD"
     tmux -L "$SK" split-window -v -t "$SN:0.0" -p 20 -c "$PD"
 fi
+# Shells may draw their first prompt before the splits resize pane 0, which can
+# leave zsh's PROMPT_SP "%" on a stray line. Ctrl-L redraws once layout settles.
+for pane in $(tmux -L "$SK" list-panes -t "$SN:0" -F '#{pane_id}'); do
+    tmux -L "$SK" send-keys -t "$pane" C-l
+done
 tmux -L "$SK" select-pane -t "$SN:0.0"
 exec tmux -L "$SK" attach
